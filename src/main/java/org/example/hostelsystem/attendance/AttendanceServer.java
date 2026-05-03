@@ -15,11 +15,12 @@ import java.sql.SQLException;
 
 public class AttendanceServer {
 
-    // Hostel location coordinates (example: Delhi, India - change to your actual hostel location)
-    private static final double HOSTEL_LAT = 30.413506634623747;
-    private static final double HOSTEL_LNG = 77.96812672857398;
+    // Hostel location coordinates (example: Delhi, India - change to your actual
+    // hostel location)
+    private static final double HOSTEL_LAT = 28.631057;
+    private static final double HOSTEL_LNG = 77.441153;
     // Maximum allowed distance from hostel in meters
-    private static final double MAX_DISTANCE_METERS = 100;
+    private static final double MAX_DISTANCE_METERS = 200;
 
     private final HttpServer server;
     private final AttendanceService attendanceService;
@@ -33,6 +34,8 @@ public class AttendanceServer {
         this.server = HttpServer.create(new InetSocketAddress(port), 0);
         server.createContext("/attendance", new AttendancePageHandler());
         server.createContext("/verify", new VerifyHandler());
+        server.createContext("/register", new RegisterPageHandler());
+        server.createContext("/api/register_fingerprint", new RegisterFingerprintHandler());
         server.setExecutor(null);
     }
 
@@ -61,6 +64,7 @@ public class AttendanceServer {
 
     /**
      * Calculates distance between two coordinates using Haversine formula.
+     * 
      * @return distance in meters
      */
     private double calculateDistance(double lat1, double lng1, double lat2, double lng2) {
@@ -69,7 +73,7 @@ public class AttendanceServer {
         double lngDistance = Math.toRadians(lng2 - lng1);
         double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
                 + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(lngDistance / 2) * Math.sin(lngDistance / 2);
+                        * Math.sin(lngDistance / 2) * Math.sin(lngDistance / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return EARTH_RADIUS * c;
     }
@@ -79,10 +83,10 @@ public class AttendanceServer {
         return distance <= MAX_DISTANCE_METERS;
     }
 
-    private String loadHtml() {
+    private String loadHtml(String path) {
         StringBuilder sb = new StringBuilder();
-        try (InputStream is = getClass().getResourceAsStream("/attendance.html");
-             BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+        try (InputStream is = getClass().getResourceAsStream(path);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 sb.append(line).append("\n");
@@ -100,7 +104,7 @@ public class AttendanceServer {
     private class AttendancePageHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
-            String html = loadHtml();
+            String html = loadHtml("/attendance.html");
             byte[] bytes = html.getBytes(StandardCharsets.UTF_8);
             exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
             exchange.sendResponseHeaders(200, bytes.length);
@@ -110,7 +114,66 @@ public class AttendanceServer {
         }
     }
 
-    private class VerifyHandler implements HttpHandler {
+    class RegisterPageHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if ("GET".equals(exchange.getRequestMethod())) {
+                String html = loadHtml("/register.html");
+                if (html == null) {
+                    html = "<html><body><h1>Error loading page</h1></body></html>";
+                }
+                exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
+                exchange.sendResponseHeaders(200, html.getBytes(StandardCharsets.UTF_8).length);
+                OutputStream os = exchange.getResponseBody();
+                os.write(html.getBytes(StandardCharsets.UTF_8));
+                os.close();
+            } else {
+                exchange.sendResponseHeaders(405, -1);
+            }
+        }
+    }
+
+    class RegisterFingerprintHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if ("POST".equals(exchange.getRequestMethod())) {
+                StringBuilder body = new StringBuilder();
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        body.append(line);
+                    }
+                }
+                
+                JSONObject responseJson = new JSONObject();
+                try {
+                    JSONObject req = new JSONObject(body.toString());
+                    int residentId = req.getInt("residentId");
+                    String webauthnId = req.getString("webauthnId");
+                    
+                    org.example.hostelsystem.service.ResidentService rs = new org.example.hostelsystem.service.ResidentService();
+                    rs.updateWebAuthnId(residentId, webauthnId);
+                    
+                    responseJson.put("success", true);
+                } catch (Exception e) {
+                    responseJson.put("success", false);
+                    responseJson.put("message", e.getMessage());
+                }
+                
+                String response = responseJson.toString();
+                exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
+                exchange.sendResponseHeaders(200, response.getBytes(StandardCharsets.UTF_8).length);
+                OutputStream os = exchange.getResponseBody();
+                os.write(response.getBytes(StandardCharsets.UTF_8));
+                os.close();
+            } else {
+                exchange.sendResponseHeaders(405, -1);
+            }
+        }
+    }
+
+    class VerifyHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
@@ -119,62 +182,88 @@ public class AttendanceServer {
             }
 
             StringBuilder body = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8))) {
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     body.append(line);
                 }
             }
-
             JSONObject json = new JSONObject(body.toString());
             boolean biometricVerified = json.optBoolean("biometricVerified", false);
             double lat = json.optDouble("latitude", 0);
             double lng = json.optDouble("longitude", 0);
+            String webauthnId = json.optString("webauthnId", null);
 
-            // Server-side location validation - do NOT trust the browser
-            boolean locationVerified = false;
-            double distance = -1;
-            if (lat != 0 && lng != 0) {
-                distance = calculateDistance(HOSTEL_LAT, HOSTEL_LNG, lat, lng);
-                locationVerified = distance <= MAX_DISTANCE_METERS;
+            double distance = calculateDistance(HOSTEL_LAT, HOSTEL_LNG, lat, lng);
+            boolean locationVerified = distance <= MAX_DISTANCE_METERS;
+
+            int actualResidentId = pendingResidentId;
+            org.example.hostelsystem.model.Resident currentResident = null;
+            
+            // If they provided a webauthnId, look up the resident!
+            if (webauthnId != null && !webauthnId.isEmpty()) {
+                try {
+                    org.example.hostelsystem.service.ResidentService rs = new org.example.hostelsystem.service.ResidentService();
+                    currentResident = rs.getResidentByWebAuthnId(webauthnId);
+                    if (currentResident != null) {
+                        actualResidentId = currentResident.getId();
+                        pendingAttendanceDate = new Date(System.currentTimeMillis());
+                        biometricVerified = true;
+                    } else {
+                        biometricVerified = false; // Fake credential
+                    }
+                } catch (Exception e) {
+                    biometricVerified = false;
+                }
+            } else if (actualResidentId != -1) {
+                 try {
+                     org.example.hostelsystem.service.ResidentService rs = new org.example.hostelsystem.service.ResidentService();
+                     currentResident = rs.getResidentById(actualResidentId);
+                 } catch (Exception ignored) {}
             }
 
             JSONObject response = new JSONObject();
             boolean success = false;
             String message;
 
-            if (pendingResidentId == -1) {
-                message = "No resident selected. Please initiate attendance from the application.";
+            if (actualResidentId == -1) {
+                message = "No active attendance session and fingerprint not recognized. Please scan the QR code again or register your fingerprint.";
             } else if (lat == 0 && lng == 0) {
                 message = "Location data missing. Please allow location access.";
                 try {
-                    attendanceService.markAbsent(pendingResidentId, BigDecimal.valueOf(0), BigDecimal.valueOf(0), pendingAttendanceDate);
-                } catch (SQLException ignored) {}
+                    attendanceService.markAbsent(actualResidentId, BigDecimal.valueOf(0), BigDecimal.valueOf(0),
+                            pendingAttendanceDate);
+                } catch (SQLException ignored) {
+                }
             } else if (!locationVerified) {
                 message = String.format(
-                    "Location verification failed. You are %.0f meters away from the hostel. Maximum allowed: %.0f meters.",
-                    distance, MAX_DISTANCE_METERS);
+                        "Location verification failed. You are %.0f meters away from the hostel. Maximum allowed: %.0f meters.",
+                        distance, MAX_DISTANCE_METERS);
                 try {
-                    attendanceService.markAbsent(pendingResidentId, BigDecimal.valueOf(lat), BigDecimal.valueOf(lng), pendingAttendanceDate);
-                } catch (SQLException ignored) {}
+                    attendanceService.markAbsent(actualResidentId, BigDecimal.valueOf(lat), BigDecimal.valueOf(lng),
+                            pendingAttendanceDate);
+                } catch (SQLException ignored) {
+                }
             } else if (!biometricVerified) {
-                message = "Biometric verification failed. Please use your device's fingerprint or face scanner.";
+                message = "Biometric verification failed. Fingerprint not recognized.";
                 try {
-                    attendanceService.markAbsent(pendingResidentId, BigDecimal.valueOf(lat), BigDecimal.valueOf(lng), pendingAttendanceDate);
-                } catch (SQLException ignored) {}
+                    attendanceService.markAbsent(actualResidentId, BigDecimal.valueOf(lat), BigDecimal.valueOf(lng),
+                            pendingAttendanceDate);
+                } catch (SQLException ignored) {
+                }
             } else {
                 try {
                     attendanceService.markAttendance(
-                        pendingResidentId,
-                        BigDecimal.valueOf(lat),
-                        BigDecimal.valueOf(lng),
-                        true,
-                        true,
-                        pendingAttendanceDate
-                    );
+                            actualResidentId,
+                            BigDecimal.valueOf(lat),
+                            BigDecimal.valueOf(lng),
+                            true,
+                            true,
+                            pendingAttendanceDate);
                     success = true;
                     message = String.format(
-                        "Attendance marked successfully! Verified at %.0f meters from hostel.", distance);
+                            "Attendance marked successfully! Verified at %.0f meters from hostel.", distance);
                 } catch (SQLException e) {
                     message = "Database error: " + e.getMessage();
                 } catch (IllegalStateException e) {
@@ -186,6 +275,13 @@ public class AttendanceServer {
             lastAttendanceMessage = message;
             response.put("success", success);
             response.put("message", message);
+            
+            if (success && currentResident != null) {
+                response.put("residentName", currentResident.getFullName());
+                response.put("residentPhone", currentResident.getPhone() != null ? currentResident.getPhone() : "N/A");
+                response.put("residentRoom", currentResident.getRoomId() != null ? String.valueOf(currentResident.getRoomId()) : "N/A");
+                response.put("residentEmail", currentResident.getEmail() != null ? currentResident.getEmail() : "N/A");
+            }
 
             byte[] bytes = response.toString().getBytes(StandardCharsets.UTF_8);
             exchange.getResponseHeaders().set("Content-Type", "application/json");

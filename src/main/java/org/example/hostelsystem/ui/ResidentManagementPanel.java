@@ -53,6 +53,17 @@ public class ResidentManagementPanel extends JPanel {
                 populateFormFromSelection();
             }
         });
+        residentTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() == 2 && residentTable.getSelectedRow() != -1) {
+                    int row = residentTable.getSelectedRow();
+                    int id = (int) residentTable.getValueAt(row, 0);
+                    String name = (String) residentTable.getValueAt(row, 1);
+                    new ResidentHistoryDialog((Frame) SwingUtilities.getWindowAncestor(ResidentManagementPanel.this), id, name).setVisible(true);
+                }
+            }
+        });
 
         JPanel tablePanel = new JPanel(new BorderLayout());
         JTextField searchField = new JTextField(20);
@@ -287,7 +298,30 @@ public class ResidentManagementPanel extends JPanel {
             residentService.addResident(r);
             loadResidents();
             clearForm();
-            JOptionPane.showMessageDialog(this, "Resident added successfully!");
+            
+            // Assuming r.getId() gets populated by ResidentDAO.addResident (which uses getGeneratedKeys)
+            String registerUrl = "http://localhost:8765/register?id=" + r.getId();
+            
+            JEditorPane ep = new JEditorPane("text/html", 
+                "<html><body style='font-family:sans-serif;'>" +
+                "Resident added successfully!<br><br>" +
+                "To register their fingerprint, ask the student to open this URL on their phone:<br>" +
+                "<a href=\"" + registerUrl + "\">" + registerUrl + "</a>" +
+                "</body></html>");
+            ep.addHyperlinkListener(ev -> {
+                if (ev.getEventType().equals(javax.swing.event.HyperlinkEvent.EventType.ACTIVATED)) {
+                    try {
+                        java.awt.Desktop.getDesktop().browse(ev.getURL().toURI());
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            });
+            ep.setEditable(false);
+            ep.setBackground(new JLabel().getBackground());
+            ep.setBorder(null);
+
+            JOptionPane.showMessageDialog(this, ep, "Fingerprint Registration", JOptionPane.INFORMATION_MESSAGE);
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }

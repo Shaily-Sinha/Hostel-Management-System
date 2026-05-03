@@ -164,6 +164,15 @@
             <div class="icon" id="resultIcon">✅</div>
             <h1 id="resultTitle">Attendance Marked!</h1>
             <p class="subtitle" id="resultMessage">Your attendance has been recorded successfully.</p>
+            
+            <div id="studentDetails" style="display: none; background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 20px 0; text-align: left;">
+                <h3 style="margin-top:0; border-bottom:1px solid #ddd; padding-bottom:5px;">Student Details</h3>
+                <p><strong>Name:</strong> <span id="resName"></span></p>
+                <p><strong>Room:</strong> <span id="resRoom"></span></p>
+                <p><strong>Phone:</strong> <span id="resPhone"></span></p>
+                <p><strong>Email:</strong> <span id="resEmail"></span></p>
+            </div>
+            
             <button class="btn" onclick="window.close()">Close Window</button>
         </div>
     </div>
@@ -172,9 +181,9 @@
         let locationData = null;
         let biometricVerified = false;
 
-        const HOSTEL_LAT = 30.413506634623747;
-        const HOSTEL_LNG = 77.96812672857398;
-        const MAX_DISTANCE_METERS = 100;
+        const HOSTEL_LAT = 28.631057;
+        const HOSTEL_LNG = 77.441153;
+        const MAX_DISTANCE_METERS = 200;
 
         function calculateDistance(lat1, lng1, lat2, lng2) {
             const R = 6371000;
@@ -257,6 +266,8 @@
             );
         }
 
+        let webauthnId = null;
+
         async function startBiometric() {
             const btn = document.getElementById('bioBtn');
             const statusEl = document.getElementById('bioStatus');
@@ -266,7 +277,7 @@
 
             try {
                 if (!window.PublicKeyCredential) {
-                    throw new Error('WebAuthn is not supported in this browser.');
+                    throw new Error('WebAuthn is not supported. Please use HTTPS or localhost.');
                 }
 
                 const challenge = new Uint8Array(32);
@@ -274,24 +285,16 @@
 
                 const publicKey = {
                     challenge: challenge,
-                    rp: { name: 'Hostel Management System' },
-                    user: {
-                        id: new Uint8Array(16),
-                        name: 'resident@hostel.com',
-                        displayName: 'Hostel Resident'
-                    },
-                    pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
-                    authenticatorSelection: {
-                        userVerification: 'required',
-                        authenticatorAttachment: 'platform'
-                    },
+                    rpId: window.location.hostname,
+                    userVerification: 'required',
                     timeout: 60000
                 };
 
-                const credential = await navigator.credentials.create({ publicKey });
+                const credential = await navigator.credentials.get({ publicKey });
 
                 if (credential) {
                     biometricVerified = true;
+                    webauthnId = btoa(String.fromCharCode.apply(null, new Uint8Array(credential.rawId)));
                     statusEl.className = 'status success';
                     statusEl.textContent = 'Biometric verified successfully!';
                     setTimeout(submitAttendance, 1000);
@@ -317,7 +320,8 @@
                     body: JSON.stringify({
                         biometricVerified: false,
                         latitude: locationData ? locationData.latitude : 0,
-                        longitude: locationData ? locationData.longitude : 0
+                        longitude: locationData ? locationData.longitude : 0,
+                        webauthnId: webauthnId
                     })
                 });
                 const data = await response.json();
@@ -354,7 +358,8 @@
                     body: JSON.stringify({
                         biometricVerified: biometricVerified,
                         latitude: locationData ? locationData.latitude : 0,
-                        longitude: locationData ? locationData.longitude : 0
+                        longitude: locationData ? locationData.longitude : 0,
+                        webauthnId: webauthnId
                     })
                 });
 
@@ -364,6 +369,14 @@
                     resultIcon.textContent = '✅';
                     resultTitle.textContent = 'Attendance Marked!';
                     resultMessage.textContent = data.message;
+                    
+                    if (data.residentName) {
+                        document.getElementById('studentDetails').style.display = 'block';
+                        document.getElementById('resName').textContent = data.residentName;
+                        document.getElementById('resRoom').textContent = data.residentRoom;
+                        document.getElementById('resPhone').textContent = data.residentPhone;
+                        document.getElementById('resEmail').textContent = data.residentEmail;
+                    }
                 } else {
                     resultIcon.textContent = '❌';
                     resultTitle.textContent = 'Failed';

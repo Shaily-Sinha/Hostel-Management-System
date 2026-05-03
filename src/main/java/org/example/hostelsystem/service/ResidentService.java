@@ -32,4 +32,12 @@ public class ResidentService {
     public List<Resident> getActiveResidents() throws SQLException {
         return residentDAO.getActiveResidents();
     }
+
+    public Resident getResidentByWebAuthnId(String webauthnId) throws SQLException {
+        return residentDAO.getResidentByWebAuthnId(webauthnId);
+    }
+
+    public void updateWebAuthnId(int residentId, String webauthnId) throws SQLException {
+        residentDAO.updateWebAuthnId(residentId, webauthnId);
+    }
 }
