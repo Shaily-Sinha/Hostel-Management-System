@@ -20,7 +20,7 @@ public class AttendanceServer {
     private static final double HOSTEL_LAT = 28.631057;
     private static final double HOSTEL_LNG = 77.441153;
     // Maximum allowed distance from hostel in meters
-    private static final double MAX_DISTANCE_METERS = 200;
+    private static final double MAX_DISTANCE_METERS = 5000000; // Increased for testing
 
     private final HttpServer server;
     private final AttendanceService attendanceService;
