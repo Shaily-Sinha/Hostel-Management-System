@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hostel Attendance - Location & Biometric Verification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .step {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        .step.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .coords {
+            font-size: 12px;
+            color: #888;
+            margin-top: 10px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #eee;
+            border-radius: 3px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <!-- Step 1: Welcome -->
+        <div class="step active" id="step1">
+            <div class="icon">🏠</div>
+            <h1>Hostel Attendance</h1>
+            <p class="subtitle">Secure attendance with location & biometric verification</p>
+            <button class="btn" onclick="startVerification()">Start Verification</button>
+        </div>
+
+        <!-- Step 2: Location -->
+        <div class="step" id="step2">
+            <div class="icon">📍</div>
+            <h1>Location Verification</h1>
+            <p class="subtitle">Please allow access to your location</p>
+            <div class="spinner" id="locationSpinner"></div>
+            <div class="coords" id="coords"></div>
+            <div class="status info" id="locationStatus">Requesting location access...</div>
+        </div>
+
+        <!-- Step 3: Biometric -->
+        <div class="step" id="step3">
+            <div class="icon">🔐</div>
+            <h1>Biometric Verification</h1>
+            <p class="subtitle">Use your device's biometric authenticator</p>
+            <button class="btn" id="bioBtn" onclick="startBiometric()">Verify Biometric</button>
+            <div class="status" id="bioStatus"></div>
+        </div>
+
+        <!-- Step 4: Result -->
+        <div class="step" id="step4">
+            <div class="icon" id="resultIcon">✅</div>
+            <h1 id="resultTitle">Attendance Marked!</h1>
+            <p class="subtitle" id="resultMessage">Your attendance has been recorded successfully.</p>
+            <button class="btn" onclick="window.close()">Close Window</button>
+        </div>
+    </div>
+
+    <script>
+        let locationData = null;
+        let biometricVerified = false;
+
+        const HOSTEL_LAT = 30.413506634623747;
+        const HOSTEL_LNG = 77.96812672857398;
+        const MAX_DISTANCE_METERS = 100;
+
+        function calculateDistance(lat1, lng1, lat2, lng2) {
+            const R = 6371000;
+            const latDist = (lat2 - lat1) * Math.PI / 180;
+            const lngDist = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(latDist / 2) * Math.sin(latDist / 2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(lngDist / 2) * Math.sin(lngDist / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        function updateProgress(percent) {
+            document.getElementById('progressFill').style.width = percent + '%';
+        }
+
+        function showStep(stepNum) {
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.getElementById('step' + stepNum).classList.add('active');
+            updateProgress((stepNum - 1) * 33);
+        }
+
+        function startVerification() {
+            showStep(2);
+            getLocation();
+        }
+
+        function getLocation() {
+            const statusEl = document.getElementById('locationStatus');
+            const coordsEl = document.getElementById('coords');
+
+            if (!navigator.geolocation) {
+                statusEl.className = 'status error';
+                statusEl.textContent = 'Geolocation is not supported by your browser.';
+                document.getElementById('locationSpinner').style.display = 'none';
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    locationData = {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                        accuracy: position.coords.accuracy
+                    };
+                    const dist = calculateDistance(HOSTEL_LAT, HOSTEL_LNG, locationData.latitude, locationData.longitude);
+                    coordsEl.textContent = `Lat: ${locationData.latitude.toFixed(6)}, Lng: ${locationData.longitude.toFixed(6)} (Accuracy: ${locationData.accuracy.toFixed(1)}m, Distance: ${dist.toFixed(0)}m)`;
+                    if (dist > MAX_DISTANCE_METERS) {
+                        statusEl.className = 'status error';
+                        statusEl.textContent = `Location verification failed. You are ${dist.toFixed(0)} meters away. Maximum allowed: ${MAX_DISTANCE_METERS} meters.`;
+                        document.getElementById('locationSpinner').style.display = 'none';
+                        submitFailedVerification();
+                        return;
+                    }
+                    statusEl.className = 'status success';
+                    statusEl.textContent = 'Location verified successfully!';
+                    document.getElementById('locationSpinner').style.display = 'none';
+                    setTimeout(() => showStep(3), 1500);
+                },
+                (error) => {
+                    let msg = 'Location error: ';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            msg += 'Permission denied. Please enable location access.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            msg += 'Position unavailable.';
+                            break;
+                        case error.TIMEOUT:
+                            msg += 'Request timed out.';
+                            break;
+                        default:
+                            msg += 'Unknown error.';
+                    }
+                    statusEl.className = 'status error';
+                    statusEl.textContent = msg;
+                    document.getElementById('locationSpinner').style.display = 'none';
+                },
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            );
+        }
+
+        async function startBiometric() {
+            const btn = document.getElementById('bioBtn');
+            const statusEl = document.getElementById('bioStatus');
+            btn.disabled = true;
+            statusEl.className = 'status info';
+            statusEl.textContent = 'Waiting for biometric authentication...';
+
+            try {
+                if (!window.PublicKeyCredential) {
+                    throw new Error('WebAuthn is not supported in this browser.');
+                }
+
+                const challenge = new Uint8Array(32);
+                window.crypto.getRandomValues(challenge);
+
+                const publicKey = {
+                    challenge: challenge,
+                    rp: { name: 'Hostel Management System' },
+                    user: {
+                        id: new Uint8Array(16),
+                        name: 'resident@hostel.com',
+                        displayName: 'Hostel Resident'
+                    },
+                    pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
+                    authenticatorSelection: {
+                        userVerification: 'required',
+                        authenticatorAttachment: 'platform'
+                    },
+                    timeout: 60000
+                };
+
+                const credential = await navigator.credentials.create({ publicKey });
+
+                if (credential) {
+                    biometricVerified = true;
+                    statusEl.className = 'status success';
+                    statusEl.textContent = 'Biometric verified successfully!';
+                    setTimeout(submitAttendance, 1000);
+                } else {
+                    throw new Error('Biometric verification failed.');
+                }
+            } catch (err) {
+                biometricVerified = false;
+                statusEl.className = 'status error';
+                statusEl.textContent = 'Biometric verification failed: ' + err.message;
+                btn.disabled = false;
+            }
+        }
+
+        async function submitFailedVerification() {
+            const statusEl = document.getElementById('locationStatus');
+            statusEl.className = 'status info';
+            statusEl.textContent = 'Recording failed attendance...';
+            try {
+                const response = await fetch('/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        biometricVerified: false,
+                        latitude: locationData ? locationData.latitude : 0,
+                        longitude: locationData ? locationData.longitude : 0
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    statusEl.className = 'status success';
+                    statusEl.textContent = data.message;
+                } else {
+                    statusEl.className = 'status error';
+                    statusEl.textContent = data.message;
+                    setTimeout(() => window.close(), 3000);
+                }
+            } catch (err) {
+                statusEl.className = 'status error';
+                statusEl.textContent = 'Network error: ' + err.message;
+            }
+        }
+
+        async function submitAttendance() {
+            showStep(4);
+            updateProgress(100);
+
+            const resultIcon = document.getElementById('resultIcon');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultMessage = document.getElementById('resultMessage');
+
+            resultIcon.textContent = '⏳';
+            resultTitle.textContent = 'Processing...';
+            resultMessage.textContent = 'Please wait while we record your attendance.';
+
+            try {
+                const response = await fetch('/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        biometricVerified: biometricVerified,
+                        latitude: locationData ? locationData.latitude : 0,
+                        longitude: locationData ? locationData.longitude : 0
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultIcon.textContent = '✅';
+                    resultTitle.textContent = 'Attendance Marked!';
+                    resultMessage.textContent = data.message;
+                } else {
+                    resultIcon.textContent = '❌';
+                    resultTitle.textContent = 'Failed';
+                    resultMessage.textContent = data.message;
+                    setTimeout(() => window.close(), 3000);
+                }
+            } catch (err) {
+                resultIcon.textContent = '❌';
+                resultTitle.textContent = 'Error';
+                resultMessage.textContent = 'Network error: ' + err.message;
+            }
+        }
+    </script>
+</body>
+</html>
