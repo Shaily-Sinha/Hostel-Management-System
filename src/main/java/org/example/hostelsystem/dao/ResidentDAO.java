@@ -54,11 +54,34 @@ public class ResidentDAO {
     }
 
     public void deleteResident(int id) throws SQLException {
-        String sql = "DELETE FROM residents WHERE id=?";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, id);
-            stmt.executeUpdate();
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                String[] tables = {
+                    "notifications", "student_ids", "late_arrival_intimations", 
+                    "leave_requests", "mess_bills", "attendance", "bookings"
+                };
+                for (String table : tables) {
+                    try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM " + table + " WHERE resident_id=?")) {
+                        stmt.setInt(1, id);
+                        stmt.executeUpdate();
+                    } catch (SQLException e) {
+                        // Table might not exist or other error, just log and continue
+                        System.err.println("Warning deleting from " + table + ": " + e.getMessage());
+                    }
+                }
+                
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM residents WHERE id=?")) {
+                    stmt.setInt(1, id);
+                    stmt.executeUpdate();
+                }
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
         }
     }
 
@@ -113,5 +136,27 @@ public class ResidentDAO {
             rs.getString("status"),
             rs.getTimestamp("created_at")
         );
+    }
+
+    public Resident getResidentByWebAuthnId(String webauthnId) throws SQLException {
+        String sql = "SELECT * FROM residents WHERE webauthn_id=?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, webauthnId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return mapResident(rs);
+            }
+        }
+        return null;
+    }
+
+    public void updateWebAuthnId(int residentId, String webauthnId) throws SQLException {
+        String sql = "UPDATE residents SET webauthn_id=? WHERE id=?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, webauthnId);
+            stmt.setInt(2, residentId);
+            stmt.executeUpdate();
+        }
     }
 }
