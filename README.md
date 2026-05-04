@@ -1,4 +1,4 @@
-# Hostel Management System
+ # Hostel Management System
 
 A desktop-based Hostel Management System built with Java Swing and MySQL. It provides role-based access control for Administrators, Wardens, and Students to manage rooms, residents, bookings, attendance, mess services, leave requests, notifications, and more.
 
@@ -82,7 +82,7 @@ org.example.hostelsystem
 5. **Attendance Server** (`attendance/`)
    - Embedded HTTP server (`AttendanceServer`) that serves the attendance verification HTML page
    - Handles location verification and biometric confirmation via REST endpoint
-   - Session-token based flow to bind location and biometric verification to the same device
+   - Uses shared in-memory state (`pendingResidentId`) to bind the Swing UI attendance request to the browser verification session
 
 ---
 
@@ -113,7 +113,7 @@ Edit `DatabaseConnection.java` before running:
 ```java
 private static final String URL = "jdbc:mysql://localhost:3306/hostel_db";
 private static final String USER = "root";
-private static final String PASSWORD = "your_mysql_password";
+private static final String PASSWORD = ""; // Default XAMPP password is empty. Update if yours is different.
 ```
 
 ---
@@ -134,15 +134,19 @@ This script will:
 
 ### Option 2: Using Maven
 
+Compile the project:
 ```bash
-mvn compile exec:java -Dexec.mainClass="org.example.hostelsystem.HostelSystemApplication"
+mvn compile
 ```
 
-Or package and run:
-
+Then run using the provided script (recommended):
 ```bash
-mvn package
-java -jar target/HostelSystem-1.0-SNAPSHOT.jar
+run.bat
+```
+
+Or manually (ensure dependencies are in `target/dependency` first):
+```bash
+java -cp "target/classes;target/dependency/*" org.example.hostelsystem.HostelSystemApplication
 ```
 
 ### Prerequisites
@@ -153,13 +157,19 @@ java -jar target/HostelSystem-1.0-SNAPSHOT.jar
 
 ---
 
-## Default Login Credentials
+## First-Time Setup
 
-| Username | Password | Role |
-|----------|----------|------|
-| `admin` | `admin123` | Admin |
+There are **no default login credentials**. The application does not auto-seed any users.
 
-The system automatically seeds a default admin user on first run if no users exist. Additional users can be created from the User Management panel.
+To create the first admin, run this SQL in your MySQL client (e.g., phpMyAdmin):
+
+```sql
+USE hostel_db;
+INSERT INTO users (username, password, role, full_name, email)
+VALUES ('admin', 'admin123', 'ADMIN', 'System Administrator', 'admin@hostel.com');
+```
+
+After the first admin is created, additional users can be added from the **User Management** panel inside the app.
 
 ---
 
@@ -168,15 +178,15 @@ The system automatically seeds a default admin user on first run if no users exi
 The attendance system uses a hybrid desktop-browser architecture:
 
 1. **Initiate:** User clicks "Mark Attendance" in the Swing UI
-2. **Session Creation:** The backend generates a unique session token bound to the resident and date
-3. **Browser Launch:** A browser opens to `http://localhost:8765/attendance?token=<session_token>`
+2. **Session State:** The backend stores the resident ID and attendance date in shared memory (`pendingResidentId`)
+3. **Browser Launch:** A browser opens to `http://localhost:8765/attendance`
 4. **Location Verification:** The HTML page requests GPS coordinates via the Geolocation API and validates distance from the hostel using the Haversine formula (max 100 meters)
 5. **Biometric Verification:** The page uses the WebAuthn API with `authenticatorAttachment: 'platform'` to trigger the device's native fingerprint or face scanner
-6. **Server Validation:** Both location and biometric results are sent to the `/verify` endpoint. The server validates the session token, recalculates distance server-side, and marks attendance as:
+6. **Server Validation:** Both location and biometric results are sent to the `/verify` endpoint. The server uses the pending resident ID, recalculates distance server-side, and marks attendance as:
    - **PRESENT** if both location and biometric pass
    - **ABSENT** if either check fails (automatic failure recording)
 
-**Security Note:** The session token ensures that location verification and biometric verification must both originate from the same browser session on the same device. Tokens expire after 10 minutes and are single-use.
+**Note:** Because the server uses a single shared state variable for the pending resident, only one attendance session should be active at a time. If two users initiate attendance simultaneously, the second request will overwrite the first.
 
 ---
 
@@ -203,8 +213,7 @@ HostelSystem/
 │   │   │   │   ├── StudentIdDAO.java
 │   │   │   │   └── UserDAO.java
 │   │   │   ├── db/
-│   │   │   │   ├── DatabaseConnection.java
-│   │   │   │   └── DummyDataSeeder.java
+│   │   │   │   └── DatabaseConnection.java
 │   │   │   ├── model/
 │   │   │   │   ├── AttendanceRecord.java
 │   │   │   │   ├── Booking.java
