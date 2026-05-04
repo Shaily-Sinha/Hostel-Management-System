@@ -70,16 +70,16 @@ public class AttendancePanel extends JPanel {
         ModernTheme.styleTable(attendanceTable);
 
         JScrollPane scrollPane = ModernTheme.scrollPane(attendanceTable);
-        scrollPane.setPreferredSize(new Dimension(0, 300));
-        add(scrollPane, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
     }
 
     private void initForm() {
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBorder(BorderFactory.createTitledBorder("Mark Attendance"));
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 8, 8, 8);
+        gbc.insets = new Insets(4, 6, 4, 6);
         gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
 
         residentCombo = new JComboBox<>();
         refreshResidentCombo();
@@ -96,14 +96,14 @@ public class AttendancePanel extends JPanel {
         gbc.gridx = 3;
         formPanel.add(dateSpinner, gbc);
 
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
 
         JButton markBtn = new JButton("Mark Attendance (Browser)");
         markBtn.setBackground(new Color(60, 179, 113));
         markBtn.setForeground(Color.WHITE);
         markBtn.setOpaque(true);
         markBtn.setBorderPainted(false);
-        markBtn.setFont(new Font("Arial", Font.BOLD, 14));
+        markBtn.setFont(new Font("Arial", Font.BOLD, 13));
         markBtn.setFocusPainted(false);
         markBtn.addActionListener(this::markAttendance);
 
@@ -117,23 +117,25 @@ public class AttendancePanel extends JPanel {
         buttonPanel.add(refreshBtn);
 
         gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 4;
+        gbc.anchor = GridBagConstraints.CENTER;
         formPanel.add(buttonPanel, gbc);
 
-        JLabel infoLabel = new JLabel("<html><center>This will open your browser to verify location and biometric authentication.</center></html>", SwingConstants.CENTER);
-        infoLabel.setFont(new Font("Arial", Font.ITALIC, 12));
+        JLabel infoLabel = new JLabel("This will open your browser to verify location and biometric authentication.", SwingConstants.CENTER);
+        infoLabel.setFont(new Font("Arial", Font.ITALIC, 11));
         infoLabel.setForeground(Color.DARK_GRAY);
         gbc.gridy = 2;
         formPanel.add(infoLabel, gbc);
 
-        add(formPanel, BorderLayout.CENTER);
+        add(formPanel, BorderLayout.SOUTH);
     }
 
     private void initStudentForm() {
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBorder(BorderFactory.createTitledBorder("Mark My Attendance"));
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 8, 8, 8);
+        gbc.insets = new Insets(4, 6, 4, 6);
         gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
 
         dateSpinner = new JSpinner(new SpinnerDateModel());
         dateSpinner.setEditor(new JSpinner.DateEditor(dateSpinner, "yyyy-MM-dd"));
@@ -143,14 +145,14 @@ public class AttendancePanel extends JPanel {
         gbc.gridx = 1;
         formPanel.add(dateSpinner, gbc);
 
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
 
         JButton markBtn = new JButton("Mark My Attendance (Browser)");
         markBtn.setBackground(new Color(60, 179, 113));
         markBtn.setForeground(Color.WHITE);
         markBtn.setOpaque(true);
         markBtn.setBorderPainted(false);
-        markBtn.setFont(new Font("Arial", Font.BOLD, 14));
+        markBtn.setFont(new Font("Arial", Font.BOLD, 13));
         markBtn.setFocusPainted(false);
         markBtn.addActionListener(this::markAttendance);
 
@@ -161,15 +163,16 @@ public class AttendancePanel extends JPanel {
         buttonPanel.add(refreshBtn);
 
         gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.CENTER;
         formPanel.add(buttonPanel, gbc);
 
-        JLabel infoLabel = new JLabel("<html><center>This will open your browser to verify your location and biometric.</center></html>", SwingConstants.CENTER);
-        infoLabel.setFont(new Font("Arial", Font.ITALIC, 12));
+        JLabel infoLabel = new JLabel("This will open your browser to verify your location and biometric.", SwingConstants.CENTER);
+        infoLabel.setFont(new Font("Arial", Font.ITALIC, 11));
         infoLabel.setForeground(Color.DARK_GRAY);
         gbc.gridy = 2;
         formPanel.add(infoLabel, gbc);
 
-        add(formPanel, BorderLayout.CENTER);
+        add(formPanel, BorderLayout.SOUTH);
     }
 
     private void refreshResidentCombo() {

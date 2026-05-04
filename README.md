@@ -134,19 +134,19 @@ This script will:
 
 ### Option 2: Using Maven
 
-Compile the project:
+Build the project into a self-contained executable "Fat JAR" (bundles all dependencies):
 ```bash
-mvn compile
+mvn clean package
 ```
 
-Then run using the provided script (recommended):
+Then run the application:
+```bash
+java -jar target/HostelSystem-1.0-SNAPSHOT.jar
+```
+
+Alternatively, you can still use the provided `run.bat` script:
 ```bash
 run.bat
-```
-
-Or manually (ensure dependencies are in `target/dependency` first):
-```bash
-java -cp "target/classes;target/dependency/*" org.example.hostelsystem.HostelSystemApplication
 ```
 
 ### Prerequisites
