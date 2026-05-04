@@ -5,9 +5,11 @@ import org.example.hostelsystem.model.Room;
 import org.example.hostelsystem.service.AuthService;
 import org.example.hostelsystem.service.ResidentService;
 import org.example.hostelsystem.service.RoomService;
+import org.example.hostelsystem.ui.util.ModernTheme;
 import org.example.hostelsystem.ui.util.ValidationUtil;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
@@ -29,166 +31,182 @@ public class ResidentManagementPanel extends JPanel {
     private int selectedResidentId = -1;
 
     public ResidentManagementPanel() {
-        setLayout(new BorderLayout(10, 10));
-        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        initTable();
-        initForm();
+        setLayout(new BorderLayout(0, 0));
+        setBackground(ModernTheme.BG_DARK);
+        setBorder(new EmptyBorder(20, 20, 20, 20));
+        add(buildHeader(), BorderLayout.NORTH);
+        add(buildTable(), BorderLayout.CENTER);
+        add(buildFormCard(), BorderLayout.SOUTH);
         loadResidents();
     }
 
-    private void initTable() {
+    private JPanel buildHeader() {
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        header.setBorder(new EmptyBorder(0, 0, 14, 0));
+        header.add(ModernTheme.panelHeader("Residents", "Clean data entry for student records"), BorderLayout.WEST);
+
+        JTextField searchField = ModernTheme.searchField("Search residents...");
+        searchField.setPreferredSize(new Dimension(260, 36));
+        searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { filter(searchField); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { filter(searchField); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { filter(searchField); }
+        });
+
+        JPanel searchWrap = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        searchWrap.setOpaque(false);
+        searchWrap.add(searchField);
+        header.add(searchWrap, BorderLayout.EAST);
+        return header;
+    }
+
+    private void filter(JTextField searchField) {
+        String text = searchField.getText().trim();
+        if (text.isEmpty() || text.equals("Search residents...")) {
+            sorter.setRowFilter(null);
+        } else {
+            sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text, 1, 2, 3, 4, 6));
+        }
+    }
+
+    private JPanel buildTable() {
         String[] columns = {"ID", "Name", "Email", "Phone", "Room", "Check-In", "Status"};
         tableModel = new DefaultTableModel(columns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) { return false; }
+            @Override public boolean isCellEditable(int row, int column) { return false; }
         };
         residentTable = new JTable(tableModel);
         sorter = new TableRowSorter<>(tableModel);
         residentTable.setRowSorter(sorter);
         residentTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        residentTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
-        residentTable.setRowHeight(25);
+        ModernTheme.styleTable(residentTable);
+        residentTable.getColumnModel().getColumn(6).setCellRenderer(ModernTheme.statusRenderer());
+
+        int[] widths = {58, 190, 240, 140, 90, 120, 120};
+        for (int i = 0; i < widths.length; i++) {
+            residentTable.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
+        }
+
         residentTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting() && residentTable.getSelectedRow() != -1) {
                 populateFormFromSelection();
             }
         });
         residentTable.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
                 if (e.getClickCount() == 2 && residentTable.getSelectedRow() != -1) {
-                    int row = residentTable.getSelectedRow();
-                    int id = (int) residentTable.getValueAt(row, 0);
-                    String name = (String) residentTable.getValueAt(row, 1);
+                    int row = residentTable.convertRowIndexToModel(residentTable.getSelectedRow());
+                    int id = (int) tableModel.getValueAt(row, 0);
+                    String name = (String) tableModel.getValueAt(row, 1);
                     new ResidentHistoryDialog((Frame) SwingUtilities.getWindowAncestor(ResidentManagementPanel.this), id, name).setVisible(true);
                 }
             }
         });
 
-        JPanel tablePanel = new JPanel(new BorderLayout());
-        JTextField searchField = new JTextField(20);
-        searchField.setToolTipText("Search by name, email or phone...");
-        searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { filter(); }
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { filter(); }
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { filter(); }
-            private void filter() {
-                String text = searchField.getText().trim();
-                if (text.isEmpty()) sorter.setRowFilter(null);
-                else sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text, 1, 2, 3));
-            }
-        });
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        searchPanel.add(new JLabel("Search:"));
-        searchPanel.add(searchField);
-        tablePanel.add(searchPanel, BorderLayout.NORTH);
-        tablePanel.add(new JScrollPane(residentTable), BorderLayout.CENTER);
-        tablePanel.setPreferredSize(new Dimension(0, 250));
-        add(tablePanel, BorderLayout.NORTH);
+        JScrollPane sp = ModernTheme.scrollPane(residentTable);
+        sp.setPreferredSize(new Dimension(0, 320));
+
+        JPanel wrap = new JPanel(new BorderLayout());
+        wrap.setOpaque(false);
+        wrap.add(sp, BorderLayout.CENTER);
+        return wrap;
     }
 
-    private void initForm() {
-        JPanel formPanel = new JPanel(new GridBagLayout());
-        formPanel.setBorder(BorderFactory.createTitledBorder("Resident Details"));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+    private JPanel buildFormCard() {
+        JPanel outer = new JPanel(new BorderLayout());
+        outer.setOpaque(false);
+        outer.setBorder(new EmptyBorder(16, 0, 0, 0));
 
-        nameField = new JTextField(12);
-        emailField = new JTextField(12);
-        phoneField = new JTextField(12);
-        addressField = new JTextField(15);
-        emergencyField = new JTextField(12);
-        idProofField = new JTextField(12);
-        genderCombo = new JComboBox<>(new String[]{"Male", "Female", "Other"});
-        statusCombo = new JComboBox<>(new String[]{"ACTIVE", "INACTIVE", "CHECKED_OUT"});
-        roomCombo = new JComboBox<>();
-        dobSpinner = new JSpinner(new SpinnerDateModel());
-        dobSpinner.setEditor(new JSpinner.DateEditor(dobSpinner, "yyyy-MM-dd"));
+        JPanel card = ModernTheme.card();
+        card.setLayout(new BorderLayout(0, 16));
+        card.setBorder(new EmptyBorder(18, 22, 18, 22));
 
-        gbc.gridx = 0; gbc.gridy = 0;
-        formPanel.add(new JLabel("Full Name:"), gbc);
-        gbc.gridx = 1;
-        formPanel.add(nameField, gbc);
-        gbc.gridx = 2;
-        formPanel.add(new JLabel("Email:"), gbc);
-        gbc.gridx = 3;
-        formPanel.add(emailField, gbc);
+        JLabel section = new JLabel("Resident Details");
+        section.setFont(ModernTheme.FONT_SUBHEAD);
+        section.setForeground(ModernTheme.TEXT_SECONDARY);
 
-        gbc.gridx = 0; gbc.gridy = 1;
-        formPanel.add(new JLabel("Phone:"), gbc);
-        gbc.gridx = 1;
-        formPanel.add(phoneField, gbc);
-        gbc.gridx = 2;
-        formPanel.add(new JLabel("Gender:"), gbc);
-        gbc.gridx = 3;
-        formPanel.add(genderCombo, gbc);
+        JPanel fields = new JPanel(new GridLayout(3, 4, 14, 12));
+        fields.setOpaque(false);
 
-        gbc.gridx = 0; gbc.gridy = 2;
-        formPanel.add(new JLabel("Date of Birth:"), gbc);
-        gbc.gridx = 1;
-        formPanel.add(dobSpinner, gbc);
-        gbc.gridx = 2;
-        formPanel.add(new JLabel("Room:"), gbc);
-        gbc.gridx = 3;
-        formPanel.add(roomCombo, gbc);
+        nameField = addTextField(fields, "Full Name");
+        emailField = addTextField(fields, "Email");
+        phoneField = addTextField(fields, "Phone");
+        genderCombo = addCombo(fields, "Gender", new String[]{"Male", "Female", "Other"});
+        dobSpinner = addDateSpinner(fields, "Date of Birth");
+        roomCombo = addCombo(fields, "Room", new String[]{"None"});
+        statusCombo = addCombo(fields, "Status", new String[]{"ACTIVE", "INACTIVE", "CHECKED_OUT"});
+        emergencyField = addTextField(fields, "Emergency Contact");
+        addressField = addTextField(fields, "Address");
+        idProofField = addTextField(fields, "ID Proof");
 
-        gbc.gridx = 0; gbc.gridy = 3;
-        formPanel.add(new JLabel("Address:"), gbc);
-        gbc.gridx = 1; gbc.gridwidth = 3;
-        formPanel.add(addressField, gbc);
+        JPanel spacer = new JPanel();
+        spacer.setOpaque(false);
+        fields.add(spacer);
 
-        gbc.gridwidth = 1;
-        gbc.gridx = 0; gbc.gridy = 4;
-        formPanel.add(new JLabel("Emergency Contact:"), gbc);
-        gbc.gridx = 1;
-        formPanel.add(emergencyField, gbc);
-        gbc.gridx = 2;
-        formPanel.add(new JLabel("ID Proof:"), gbc);
-        gbc.gridx = 3;
-        formPanel.add(idProofField, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 5;
-        formPanel.add(new JLabel("Status:"), gbc);
-        gbc.gridx = 1;
-        formPanel.add(statusCombo, gbc);
-
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        buttonPanel.setOpaque(false);
         boolean canEdit = !AuthService.isWarden();
 
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
-        JButton addBtn = new JButton("Add Resident");
-        JButton updateBtn = new JButton("Update");
-        JButton deleteBtn = new JButton("Delete");
-        JButton clearBtn = new JButton("Clear");
+        if (canEdit) {
+            JButton addBtn = ModernTheme.successButton("Add Resident");
+            JButton updateBtn = ModernTheme.primaryButton("Update");
+            JButton deleteBtn = ModernTheme.dangerButton("Delete");
+            addBtn.addActionListener(this::addResident);
+            updateBtn.addActionListener(this::updateResident);
+            deleteBtn.addActionListener(this::deleteResident);
+            buttonPanel.add(addBtn);
+            buttonPanel.add(updateBtn);
+            buttonPanel.add(deleteBtn);
+        }
 
-        addBtn.setBackground(new Color(60, 179, 113));
-        addBtn.setForeground(Color.WHITE);
-        addBtn.setOpaque(true);
-        addBtn.setBorderPainted(false);
-        updateBtn.setBackground(new Color(70, 130, 180));
-        updateBtn.setForeground(Color.WHITE);
-        updateBtn.setOpaque(true);
-        updateBtn.setBorderPainted(false);
-        deleteBtn.setBackground(new Color(220, 20, 60));
-        deleteBtn.setForeground(Color.WHITE);
-        deleteBtn.setOpaque(true);
-        deleteBtn.setBorderPainted(false);
-
-        addBtn.addActionListener(this::addResident);
-        updateBtn.addActionListener(this::updateResident);
-        deleteBtn.addActionListener(this::deleteResident);
+        JButton clearBtn = ModernTheme.secondaryButton("Clear");
         clearBtn.addActionListener(e -> clearForm());
-
-        if (canEdit) buttonPanel.add(addBtn);
-        if (canEdit) buttonPanel.add(updateBtn);
-        if (canEdit) buttonPanel.add(deleteBtn);
         buttonPanel.add(clearBtn);
 
-        gbc.gridx = 0; gbc.gridy = 6; gbc.gridwidth = 4;
-        formPanel.add(buttonPanel, gbc);
+        JPanel content = new JPanel(new BorderLayout(0, 14));
+        content.setOpaque(false);
+        content.add(fields, BorderLayout.CENTER);
+        content.add(buttonPanel, BorderLayout.SOUTH);
 
-        add(formPanel, BorderLayout.CENTER);
+        card.add(section, BorderLayout.NORTH);
+        card.add(content, BorderLayout.CENTER);
+        outer.add(card, BorderLayout.CENTER);
         refreshRoomCombo();
+        return outer;
+    }
+
+    private JTextField addTextField(JPanel parent, String label) {
+        JPanel wrap = new JPanel(new BorderLayout(0, 5));
+        wrap.setOpaque(false);
+        wrap.add(ModernTheme.label(label), BorderLayout.NORTH);
+        JTextField field = ModernTheme.textField();
+        wrap.add(field, BorderLayout.CENTER);
+        parent.add(wrap);
+        return field;
+    }
+
+    private JComboBox<String> addCombo(JPanel parent, String label, String[] items) {
+        JPanel wrap = new JPanel(new BorderLayout(0, 5));
+        wrap.setOpaque(false);
+        wrap.add(ModernTheme.label(label), BorderLayout.NORTH);
+        JComboBox<String> combo = ModernTheme.comboBox(items);
+        combo.setPreferredSize(new Dimension(combo.getPreferredSize().width, 36));
+        wrap.add(combo, BorderLayout.CENTER);
+        parent.add(wrap);
+        return combo;
+    }
+
+    private JSpinner addDateSpinner(JPanel parent, String label) {
+        JPanel wrap = new JPanel(new BorderLayout(0, 5));
+        wrap.setOpaque(false);
+        wrap.add(ModernTheme.label(label), BorderLayout.NORTH);
+        JSpinner spinner = new JSpinner(new SpinnerDateModel());
+        spinner.setEditor(new JSpinner.DateEditor(spinner, "yyyy-MM-dd"));
+        spinner.setFont(ModernTheme.FONT_BODY);
+        spinner.setPreferredSize(new Dimension(spinner.getPreferredSize().width, 36));
+        wrap.add(spinner, BorderLayout.CENTER);
+        parent.add(wrap);
+        return spinner;
     }
 
     private void refreshRoomCombo() {
@@ -213,11 +231,10 @@ public class ResidentManagementPanel extends JPanel {
             Room room = roomService.getRoomById(roomId);
             if (room == null) return true;
             int occupancy = roomService.getCurrentOccupancy(room.getId());
-            // If updating same resident in same room, don't count them
             if (excludeResidentId != null) {
                 Resident current = residentService.getResidentById(excludeResidentId);
                 if (current != null && current.getRoomId() != null && current.getRoomId().equals(roomId)) {
-                    return true; // already in this room
+                    return true;
                 }
             }
             if (occupancy >= room.getCapacity()) {
@@ -252,7 +269,7 @@ public class ResidentManagementPanel extends JPanel {
     }
 
     private void populateFormFromSelection() {
-        int row = residentTable.getSelectedRow();
+        int row = residentTable.convertRowIndexToModel(residentTable.getSelectedRow());
         selectedResidentId = (int) tableModel.getValueAt(row, 0);
         try {
             Resident r = residentService.getResidentById(selectedResidentId);
@@ -298,11 +315,9 @@ public class ResidentManagementPanel extends JPanel {
             residentService.addResident(r);
             loadResidents();
             clearForm();
-            
-            // Assuming r.getId() gets populated by ResidentDAO.addResident (which uses getGeneratedKeys)
+
             String registerUrl = "http://localhost:8765/register?id=" + r.getId();
-            
-            JEditorPane ep = new JEditorPane("text/html", 
+            JEditorPane ep = new JEditorPane("text/html",
                 "<html><body style='font-family:sans-serif;'>" +
                 "Resident added successfully!<br><br>" +
                 "To register their fingerprint, ask the student to open this URL on their phone:<br>" +
@@ -320,7 +335,6 @@ public class ResidentManagementPanel extends JPanel {
             ep.setEditable(false);
             ep.setBackground(new JLabel().getBackground());
             ep.setBorder(null);
-
             JOptionPane.showMessageDialog(this, ep, "Fingerprint Registration", JOptionPane.INFORMATION_MESSAGE);
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);

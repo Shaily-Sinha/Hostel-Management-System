@@ -6,6 +6,7 @@ import org.example.hostelsystem.model.User;
 import org.example.hostelsystem.service.AuthService;
 import org.example.hostelsystem.service.NotificationService;
 import org.example.hostelsystem.service.ResidentService;
+import org.example.hostelsystem.ui.util.ModernTheme;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -91,10 +92,9 @@ public class NotificationManagementPanel extends JPanel {
             public boolean isCellEditable(int row, int column) { return false; }
         };
         notificationTable = new JTable(tableModel);
-        notificationTable.setRowHeight(25);
-        notificationTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
         notificationTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        add(new JScrollPane(notificationTable), BorderLayout.CENTER);
+        ModernTheme.styleTable(notificationTable);
+        add(ModernTheme.scrollPane(notificationTable), BorderLayout.CENTER);
 
         JPanel refreshPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton refreshBtn = new JButton("Refresh");

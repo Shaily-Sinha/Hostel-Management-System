@@ -7,6 +7,7 @@ import org.example.hostelsystem.service.AttendanceService;
 import org.example.hostelsystem.service.AuthService;
 import org.example.hostelsystem.service.ResidentService;
 import org.example.hostelsystem.service.RoomService;
+import org.example.hostelsystem.ui.util.ModernTheme;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -99,12 +100,11 @@ public class StudentProfilePanel extends JPanel {
             public boolean isCellEditable(int row, int column) { return false; }
         };
         attendanceTable = new JTable(tableModel);
-        attendanceTable.setRowHeight(25);
-        attendanceTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
+        ModernTheme.styleTable(attendanceTable);
 
         JPanel attendancePanel = new JPanel(new BorderLayout());
         attendancePanel.setBorder(BorderFactory.createTitledBorder("My Attendance History"));
-        attendancePanel.add(new JScrollPane(attendanceTable), BorderLayout.CENTER);
+        attendancePanel.add(ModernTheme.scrollPane(attendanceTable), BorderLayout.CENTER);
 
         add(attendancePanel, BorderLayout.CENTER);
     }

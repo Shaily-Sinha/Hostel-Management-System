@@ -1,7 +1,8 @@
 @echo off
 setlocal
 
-set SRC=C:\Users\sinha\IdeaProjects\HostelSystem
+set SRC=%~dp0
+if "%SRC:~-1%"=="\" set SRC=%SRC:~0,-1%
 set LIB=%SRC%\target\dependency
 set CLASSES=%SRC%\target\classes
 

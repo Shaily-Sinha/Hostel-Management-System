@@ -7,6 +7,7 @@ import org.example.hostelsystem.service.AuthService;
 import org.example.hostelsystem.service.FoodMenuService;
 import org.example.hostelsystem.service.MessBillService;
 import org.example.hostelsystem.service.ResidentService;
+import org.example.hostelsystem.ui.util.ModernTheme;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -61,9 +62,8 @@ public class MessStudentPanel extends JPanel {
             public boolean isCellEditable(int row, int column) { return false; }
         };
         menuTable = new JTable(menuTableModel);
-        menuTable.setRowHeight(25);
-        menuTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
-        panel.add(new JScrollPane(menuTable), BorderLayout.CENTER);
+        ModernTheme.styleTable(menuTable);
+        panel.add(ModernTheme.scrollPane(menuTable), BorderLayout.CENTER);
 
         loadMenuForDate();
         return panel;
@@ -96,9 +96,8 @@ public class MessStudentPanel extends JPanel {
             public boolean isCellEditable(int row, int column) { return false; }
         };
         billTable = new JTable(billTableModel);
-        billTable.setRowHeight(25);
-        billTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
-        panel.add(new JScrollPane(billTable), BorderLayout.CENTER);
+        ModernTheme.styleTable(billTable);
+        panel.add(ModernTheme.scrollPane(billTable), BorderLayout.CENTER);
 
         JButton refreshBtn = new JButton("Refresh Bills");
         refreshBtn.addActionListener(e -> loadStudentBills());

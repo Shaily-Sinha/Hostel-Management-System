@@ -2,6 +2,7 @@ package org.example.hostelsystem.ui;
 
 import org.example.hostelsystem.model.LateArrivalIntimation;
 import org.example.hostelsystem.service.LateArrivalIntimationService;
+import org.example.hostelsystem.ui.util.ModernTheme;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -40,10 +41,9 @@ public class LateArrivalManagementPanel extends JPanel {
             public boolean isCellEditable(int row, int column) { return false; }
         };
         intimationTable = new JTable(tableModel);
-        intimationTable.setRowHeight(25);
-        intimationTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
         intimationTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        add(new JScrollPane(intimationTable), BorderLayout.CENTER);
+        ModernTheme.styleTable(intimationTable);
+        add(ModernTheme.scrollPane(intimationTable), BorderLayout.CENTER);
 
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
         JButton ackBtn = new JButton("Acknowledge");

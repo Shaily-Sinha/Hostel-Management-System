@@ -3,6 +3,7 @@ package org.example.hostelsystem.ui;
 import org.example.hostelsystem.model.User;
 import org.example.hostelsystem.service.AuthService;
 import org.example.hostelsystem.dao.UserDAO;
+import org.example.hostelsystem.ui.util.ModernTheme;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -34,10 +35,9 @@ public class UserManagementPanel extends JPanel {
             public boolean isCellEditable(int row, int column) { return false; }
         };
         userTable = new JTable(tableModel);
-        userTable.setRowHeight(25);
-        userTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
+        ModernTheme.styleTable(userTable);
 
-        JScrollPane scrollPane = new JScrollPane(userTable);
+        JScrollPane scrollPane = ModernTheme.scrollPane(userTable);
         scrollPane.setPreferredSize(new Dimension(0, 250));
         add(scrollPane, BorderLayout.NORTH);
     }
