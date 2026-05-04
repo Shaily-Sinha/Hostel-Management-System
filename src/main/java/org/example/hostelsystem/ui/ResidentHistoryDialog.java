@@ -1,6 +1,7 @@
 package org.example.hostelsystem.ui;
 
 import org.example.hostelsystem.db.DatabaseConnection;
+import org.example.hostelsystem.ui.util.ModernTheme;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -48,8 +49,8 @@ public class ResidentHistoryDialog extends JDialog {
             }
         };
         JTable table = new JTable(model);
-        table.setRowHeight(25);
-        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+        ModernTheme.styleTable(table);
+        panel.add(ModernTheme.scrollPane(table), BorderLayout.CENTER);
         return panel;
     }
 

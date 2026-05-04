@@ -4,6 +4,7 @@ import org.example.hostelsystem.model.Resident;
 import org.example.hostelsystem.model.StudentId;
 import org.example.hostelsystem.service.ResidentService;
 import org.example.hostelsystem.service.StudentIdService;
+import org.example.hostelsystem.ui.util.ModernTheme;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -109,13 +110,12 @@ public class StudentIdManagementPanel extends JPanel {
             public boolean isCellEditable(int row, int column) { return false; }
         };
         idTable = new JTable(tableModel);
-        idTable.setRowHeight(25);
-        idTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
         idTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        ModernTheme.styleTable(idTable);
         idTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) populateForm();
         });
-        add(new JScrollPane(idTable), BorderLayout.CENTER);
+        add(ModernTheme.scrollPane(idTable), BorderLayout.CENTER);
     }
 
     private void loadResidents() {

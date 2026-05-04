@@ -6,6 +6,7 @@ import org.example.hostelsystem.model.Resident;
 import org.example.hostelsystem.service.FoodMenuService;
 import org.example.hostelsystem.service.MessBillService;
 import org.example.hostelsystem.service.ResidentService;
+import org.example.hostelsystem.ui.util.ModernTheme;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -66,15 +67,14 @@ public class MessManagementPanel extends JPanel {
             public boolean isCellEditable(int row, int column) { return false; }
         };
         menuTable = new JTable(menuTableModel);
-        menuTable.setRowHeight(25);
-        menuTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
         menuTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        ModernTheme.styleTable(menuTable);
         menuTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting() && menuTable.getSelectedRow() != -1) {
                 populateMenuForm();
             }
         });
-        panel.add(new JScrollPane(menuTable), BorderLayout.CENTER);
+        panel.add(ModernTheme.scrollPane(menuTable), BorderLayout.CENTER);
 
         // Menu Form
         JPanel formPanel = new JPanel(new GridBagLayout());
@@ -237,15 +237,14 @@ public class MessManagementPanel extends JPanel {
             public boolean isCellEditable(int row, int column) { return false; }
         };
         billTable = new JTable(billTableModel);
-        billTable.setRowHeight(25);
-        billTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
         billTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        ModernTheme.styleTable(billTable);
         billTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting() && billTable.getSelectedRow() != -1) {
                 populateBillForm();
             }
         });
-        panel.add(new JScrollPane(billTable), BorderLayout.CENTER);
+        panel.add(ModernTheme.scrollPane(billTable), BorderLayout.CENTER);
 
         // Bill Form
         JPanel formPanel = new JPanel(new GridBagLayout());

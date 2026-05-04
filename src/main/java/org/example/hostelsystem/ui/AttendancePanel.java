@@ -6,6 +6,7 @@ import org.example.hostelsystem.service.AttendanceService;
 import org.example.hostelsystem.service.AuthService;
 import org.example.hostelsystem.service.ResidentService;
 import org.example.hostelsystem.attendance.AttendanceServer;
+import org.example.hostelsystem.ui.util.ModernTheme;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -66,10 +67,9 @@ public class AttendancePanel extends JPanel {
         };
         attendanceTable = new JTable(tableModel);
         attendanceTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        attendanceTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
-        attendanceTable.setRowHeight(25);
+        ModernTheme.styleTable(attendanceTable);
 
-        JScrollPane scrollPane = new JScrollPane(attendanceTable);
+        JScrollPane scrollPane = ModernTheme.scrollPane(attendanceTable);
         scrollPane.setPreferredSize(new Dimension(0, 300));
         add(scrollPane, BorderLayout.NORTH);
     }

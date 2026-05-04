@@ -7,6 +7,7 @@ import org.example.hostelsystem.service.AuthService;
 import org.example.hostelsystem.service.BookingService;
 import org.example.hostelsystem.service.ResidentService;
 import org.example.hostelsystem.service.RoomService;
+import org.example.hostelsystem.ui.util.ModernTheme;
 import org.example.hostelsystem.ui.util.ValidationUtil;
 
 import javax.swing.*;
@@ -50,8 +51,7 @@ public class BookingManagementPanel extends JPanel {
         sorter = new TableRowSorter<>(tableModel);
         bookingTable.setRowSorter(sorter);
         bookingTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        bookingTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
-        bookingTable.setRowHeight(25);
+        ModernTheme.styleTable(bookingTable);
         bookingTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting() && bookingTable.getSelectedRow() != -1) {
                 populateFormFromSelection();
@@ -75,7 +75,7 @@ public class BookingManagementPanel extends JPanel {
         searchPanel.add(new JLabel("Search:"));
         searchPanel.add(searchField);
         tablePanel.add(searchPanel, BorderLayout.NORTH);
-        tablePanel.add(new JScrollPane(bookingTable), BorderLayout.CENTER);
+        tablePanel.add(ModernTheme.scrollPane(bookingTable), BorderLayout.CENTER);
         tablePanel.setPreferredSize(new Dimension(0, 250));
         add(tablePanel, BorderLayout.NORTH);
     }

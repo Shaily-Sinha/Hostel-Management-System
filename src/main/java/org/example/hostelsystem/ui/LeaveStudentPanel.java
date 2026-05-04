@@ -5,6 +5,7 @@ import org.example.hostelsystem.model.Resident;
 import org.example.hostelsystem.service.AuthService;
 import org.example.hostelsystem.service.LeaveRequestService;
 import org.example.hostelsystem.service.ResidentService;
+import org.example.hostelsystem.ui.util.ModernTheme;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -82,9 +83,8 @@ public class LeaveStudentPanel extends JPanel {
             public boolean isCellEditable(int row, int column) { return false; }
         };
         leaveTable = new JTable(tableModel);
-        leaveTable.setRowHeight(25);
-        leaveTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
-        add(new JScrollPane(leaveTable), BorderLayout.CENTER);
+        ModernTheme.styleTable(leaveTable);
+        add(ModernTheme.scrollPane(leaveTable), BorderLayout.CENTER);
 
         // South: Refresh button
         JPanel refreshPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));

@@ -5,6 +5,7 @@ import org.example.hostelsystem.model.Resident;
 import org.example.hostelsystem.service.AuthService;
 import org.example.hostelsystem.service.LateArrivalIntimationService;
 import org.example.hostelsystem.service.ResidentService;
+import org.example.hostelsystem.ui.util.ModernTheme;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -79,9 +80,8 @@ public class LateArrivalStudentPanel extends JPanel {
             public boolean isCellEditable(int row, int column) { return false; }
         };
         intimationTable = new JTable(tableModel);
-        intimationTable.setRowHeight(25);
-        intimationTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
-        add(new JScrollPane(intimationTable), BorderLayout.CENTER);
+        ModernTheme.styleTable(intimationTable);
+        add(ModernTheme.scrollPane(intimationTable), BorderLayout.CENTER);
 
         JPanel refreshPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton refreshBtn = new JButton("Refresh History");
