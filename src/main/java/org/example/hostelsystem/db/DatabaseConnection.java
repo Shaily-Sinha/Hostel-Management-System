@@ -7,7 +7,7 @@ import java.sql.Statement;
 
 public class DatabaseConnection {
 
-    private static final String URL = "jdbc:mysql://localhost:3308/hostel_db";
+    private static final String URL = "jdbc:mysql://localhost:3306/hostel_db";
     private static final String USER = "root";
     // IMPORTANT: Change this to your MySQL password before running
     private static final String PASSWORD = "";
@@ -26,7 +26,7 @@ public class DatabaseConnection {
     }
 
     public static boolean initializeDatabase() {
-        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3308/", USER, PASSWORD);
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/", USER, PASSWORD);
                 Statement stmt = conn.createStatement()) {
 
             stmt.executeUpdate("CREATE DATABASE IF NOT EXISTS hostel_db");

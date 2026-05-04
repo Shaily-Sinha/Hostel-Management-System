@@ -17,10 +17,10 @@ public class AttendanceServer {
 
     // Hostel location coordinates (example: Delhi, India - change to your actual
     // hostel location)
-    private static final double HOSTEL_LAT = 28.631057;
-    private static final double HOSTEL_LNG = 77.441153;
+    private static final double HOSTEL_LAT = 30.413465;
+    private static final double HOSTEL_LNG = 77.968094;
     // Maximum allowed distance from hostel in meters
-    private static final double MAX_DISTANCE_METERS = 200;
+    private static final double MAX_DISTANCE_METERS = 100;
 
     private final HttpServer server;
     private final AttendanceService attendanceService;

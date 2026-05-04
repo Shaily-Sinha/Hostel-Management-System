@@ -1,7 +1,6 @@
 package org.example.hostelsystem;
 
 import org.example.hostelsystem.db.DatabaseConnection;
-import org.example.hostelsystem.db.DummyDataSeeder;
 import org.example.hostelsystem.ui.LoginFrame;
 
 import javax.swing.*;
@@ -17,9 +16,6 @@ public class HostelSystemApplication {
 
         SwingUtilities.invokeLater(() -> {
             if (DatabaseConnection.initializeDatabase()) {
-                DummyDataSeeder.seedIfEmpty();
-                DummyDataSeeder.ensureDefaultAdmin();
-                DummyDataSeeder.printLoginCredentials();
                 new LoginFrame().setVisible(true);
             } else {
                 JOptionPane.showMessageDialog(null,
