@@ -27,7 +27,7 @@ public class ResidentManagementPanel extends JPanel {
     private TableRowSorter<DefaultTableModel> sorter;
     private JTextField nameField, emailField, phoneField, addressField, emergencyField, idProofField;
     private JComboBox<String> genderCombo, statusCombo, roomCombo;
-    private JSpinner dobSpinner;
+    private JSpinner checkInDateSpinner;
     private int selectedResidentId = -1;
 
     public ResidentManagementPanel() {
@@ -132,7 +132,7 @@ public class ResidentManagementPanel extends JPanel {
         emailField = addTextField(fields, "Email");
         phoneField = addTextField(fields, "Phone");
         genderCombo = addCombo(fields, "Gender", new String[]{"Male", "Female", "Other"});
-        dobSpinner = addDateSpinner(fields, "Date of Birth");
+        checkInDateSpinner = addDateSpinner(fields, "Check-In Date");
         roomCombo = addCombo(fields, "Room", new String[]{"None"});
         statusCombo = addCombo(fields, "Status", new String[]{"ACTIVE", "INACTIVE", "CHECKED_OUT"});
         emergencyField = addTextField(fields, "Emergency Contact");
@@ -282,8 +282,8 @@ public class ResidentManagementPanel extends JPanel {
                 idProofField.setText(r.getIdProof());
                 genderCombo.setSelectedItem(r.getGender());
                 statusCombo.setSelectedItem(r.getStatus());
-                if (r.getDateOfBirth() != null) {
-                    dobSpinner.setValue(new java.util.Date(r.getDateOfBirth().getTime()));
+                if (r.getCheckInDate() != null) {
+                    checkInDateSpinner.setValue(new java.util.Date(r.getCheckInDate().getTime()));
                 }
                 if (r.getRoomId() != null) {
                     for (int i = 0; i < roomCombo.getItemCount(); i++) {
@@ -311,7 +311,6 @@ public class ResidentManagementPanel extends JPanel {
         try {
             Resident r = buildResidentFromForm();
             if (!isRoomCapacityAvailable(r.getRoomId(), null)) return;
-            r.setCheckInDate(new Date(System.currentTimeMillis()));
             residentService.addResident(r);
             loadResidents();
             clearForm();
@@ -393,8 +392,8 @@ public class ResidentManagementPanel extends JPanel {
         r.setIdProof(idProofField.getText().trim());
         r.setGender((String) genderCombo.getSelectedItem());
         r.setStatus((String) statusCombo.getSelectedItem());
-        java.util.Date dob = (java.util.Date) dobSpinner.getValue();
-        r.setDateOfBirth(new Date(dob.getTime()));
+        java.util.Date checkInDate = (java.util.Date) checkInDateSpinner.getValue();
+        r.setCheckInDate(new Date(checkInDate.getTime()));
         String roomStr = (String) roomCombo.getSelectedItem();
         if (roomStr != null && !roomStr.equals("None")) {
             r.setRoomId(Integer.parseInt(roomStr.split(" - ")[0]));
@@ -413,7 +412,7 @@ public class ResidentManagementPanel extends JPanel {
         genderCombo.setSelectedIndex(0);
         statusCombo.setSelectedIndex(0);
         roomCombo.setSelectedIndex(0);
-        dobSpinner.setValue(new java.util.Date());
+        checkInDateSpinner.setValue(new java.util.Date());
         residentTable.clearSelection();
         refreshRoomCombo();
     }

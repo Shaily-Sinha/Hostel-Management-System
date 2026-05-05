@@ -135,7 +135,7 @@ public class ResidentsPanel extends JPanel {
         gWrap.add(fGender, BorderLayout.CENTER);
         fields.add(gWrap);
 
-        fDob       = addField(fields, "Date of Birth");
+        fDob       = addField(fields, "Checkin date");
         fAddress   = addField(fields, "Address");
         fEmergency = addField(fields, "Emergency Contact");
         fIdProof   = addField(fields, "ID Proof");
