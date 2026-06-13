@@ -93,7 +93,13 @@ public class ModernTheme {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                Color drawColor = hovered ? bg.brighter() : bg;
+                Color drawColor;
+
+                if (hovered) {
+                    drawColor = bg.brighter();
+                } else {
+                    drawColor = bg;
+                }
                 g2.setColor(drawColor);
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
                 g2.dispose();
@@ -153,6 +159,28 @@ public class ModernTheme {
             new EmptyBorder(6, 10, 6, 10)
         ));
         tf.setPreferredSize(new Dimension(tf.getPreferredSize().width, 36));
+        tf.addFocusListener(new FocusAdapter() {
+
+            @Override
+            public void focusGained(FocusEvent e) {
+                tf.setBorder(
+                        new CompoundBorder(
+                                new LineBorder(ACCENT, 1, true),
+                                new EmptyBorder(6, 10, 6, 10)
+                        )
+                );
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                tf.setBorder(
+                        new CompoundBorder(
+                                new LineBorder(BORDER_COLOR, 1, true),
+                                new EmptyBorder(6, 10, 6, 10)
+                        )
+                );
+            }
+        });
         return tf;
     }
 
@@ -219,19 +247,57 @@ public class ModernTheme {
 
     // ─── Factory: Card Panel ─────────────────────────────────────────────────
     public static JPanel card() {
+
         JPanel p = new JPanel() {
+
             @Override
             protected void paintComponent(Graphics g) {
+
                 Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                g2.setRenderingHint(
+                        RenderingHints.KEY_ANTIALIASING,
+                        RenderingHints.VALUE_ANTIALIAS_ON
+                );
+
+                // Shadow
+                g2.setColor(new Color(0, 0, 0, 50));
+                g2.fillRoundRect(
+                        4,
+                        4,
+                        getWidth() - 5,
+                        getHeight() - 5,
+                        12,
+                        12
+                );
+
+                // Card
                 g2.setColor(BG_CARD);
-                g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 12, 12);
+                g2.fillRoundRect(
+                        0,
+                        0,
+                        getWidth() - 6,
+                        getHeight() - 6,
+                        12,
+                        12
+                );
+
                 g2.setColor(BORDER_COLOR);
-                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 12, 12);
+                g2.drawRoundRect(
+                        0,
+                        0,
+                        getWidth() - 6,
+                        getHeight() - 6,
+                        12,
+                        12
+                );
+
                 g2.dispose();
             }
         };
+
         p.setOpaque(false);
+
         return p;
     }
 
@@ -240,7 +306,7 @@ public class ModernTheme {
         table.setBackground(BG_DARK);
         table.setForeground(TEXT_PRIMARY);
         table.setFont(FONT_BODY);
-        table.setRowHeight(38);
+        table.setRowHeight(46);
         table.setShowGrid(false);
         table.setIntercellSpacing(new Dimension(0, 0));
         table.setSelectionBackground(new Color(31, 111, 235, 80));
@@ -255,7 +321,9 @@ public class ModernTheme {
         header.setFont(FONT_SUBHEAD);
         header.setReorderingAllowed(false);
         header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_COLOR));
-        header.setPreferredSize(new Dimension(header.getWidth(), 42));
+        header.setPreferredSize(
+                new Dimension(header.getWidth(), 50)
+        );
 
         // Alternating rows
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
@@ -357,5 +425,24 @@ public class ModernTheme {
         p.add(l, BorderLayout.NORTH);
         p.add(line, BorderLayout.SOUTH);
         return p;
+    }
+    public static class StatusRenderer
+            implements TableCellRenderer {
+
+        @Override
+        public Component getTableCellRendererComponent(
+                JTable table,
+                Object value,
+                boolean isSelected,
+                boolean hasFocus,
+                int row,
+                int column) {
+
+            return statusBadge(
+                    value == null
+                            ? ""
+                            : value.toString()
+            );
+        }
     }
 }

@@ -21,7 +21,7 @@ public class UserManagementPanel extends JPanel {
     private JComboBox<String> roleCombo;
 
     public UserManagementPanel() {
-        setLayout(new BorderLayout(10, 10));
+        setLayout(new GridLayout(2,1,10,10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         initTable();
         initForm();
@@ -38,16 +38,18 @@ public class UserManagementPanel extends JPanel {
         ModernTheme.styleTable(userTable);
 
         JScrollPane scrollPane = ModernTheme.scrollPane(userTable);
-        scrollPane.setPreferredSize(new Dimension(0, 250));
+        scrollPane.setPreferredSize(new Dimension(0, 450));
         add(scrollPane, BorderLayout.NORTH);
     }
 
     private void initForm() {
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBorder(BorderFactory.createTitledBorder("Create New User"));
+        formPanel.setPreferredSize(new Dimension(0, 380));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
 
         usernameField = new JTextField(12);
         passwordField = new JPasswordField(12);
@@ -78,8 +80,9 @@ public class UserManagementPanel extends JPanel {
         gbc.gridx = 1;
         formPanel.add(roleCombo, gbc);
 
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         JButton addBtn = new JButton("Create User");
+        addBtn.setPreferredSize(new Dimension(150, 40));
         addBtn.setBackground(new Color(60, 179, 113));
         addBtn.setForeground(Color.WHITE);
         addBtn.setOpaque(true);
@@ -90,7 +93,10 @@ public class UserManagementPanel extends JPanel {
         gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 4;
         formPanel.add(buttonPanel, gbc);
 
-        add(formPanel, BorderLayout.CENTER);
+        JPanel wrapper = new JPanel(new BorderLayout());
+        wrapper.add(formPanel, BorderLayout.NORTH);
+
+        add(wrapper, BorderLayout.CENTER);
     }
 
     private void loadUsers() {

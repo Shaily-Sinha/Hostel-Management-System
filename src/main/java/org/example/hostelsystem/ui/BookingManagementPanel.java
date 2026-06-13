@@ -59,8 +59,11 @@ public class BookingManagementPanel extends JPanel {
         });
 
         JPanel tablePanel = new JPanel(new BorderLayout());
-        JTextField searchField = new JTextField(20);
-        searchField.setToolTipText("Search by resident or room...");
+        JTextField searchField =
+                ModernTheme.searchField("🔍 Search bookings...");
+        searchField.setPreferredSize(
+                new Dimension(220, 36)
+        );
         searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             public void insertUpdate(javax.swing.event.DocumentEvent e) { filter(); }
             public void removeUpdate(javax.swing.event.DocumentEvent e) { filter(); }
@@ -76,15 +79,22 @@ public class BookingManagementPanel extends JPanel {
         searchPanel.add(searchField);
         tablePanel.add(searchPanel, BorderLayout.NORTH);
         tablePanel.add(ModernTheme.scrollPane(bookingTable), BorderLayout.CENTER);
-        tablePanel.setPreferredSize(new Dimension(0, 250));
+        tablePanel.setPreferredSize(new Dimension(0, 280));
         add(tablePanel, BorderLayout.NORTH);
     }
 
     private void initForm() {
-        JPanel formPanel = new JPanel(new GridBagLayout());
-        formPanel.setBorder(BorderFactory.createTitledBorder("Booking Details"));
+        JPanel formPanel = ModernTheme.card();
+        formPanel.setLayout(new GridBagLayout());
+        formPanel.setBorder(
+                BorderFactory.createCompoundBorder(
+                        BorderFactory.createEmptyBorder(20, 20, 20, 20),
+                        BorderFactory.createTitledBorder("Booking Details")
+                )
+        );
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.insets = new Insets(10, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         residentCombo = new JComboBox<>();
@@ -140,28 +150,22 @@ public class BookingManagementPanel extends JPanel {
         boolean canEdit = !AuthService.isWarden();
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
-        JButton addBtn = new JButton("Create Booking");
-        JButton updateBtn = new JButton("Update");
-        JButton confirmBtn = new JButton("Confirm");
-        JButton cancelBtn = new JButton("Cancel Booking");
-        JButton clearBtn = new JButton("Clear");
+        JButton addBtn =
+                ModernTheme.successButton("＋ Create Booking");
 
-        addBtn.setBackground(new Color(60, 179, 113));
-        addBtn.setForeground(Color.WHITE);
-        addBtn.setOpaque(true);
-        addBtn.setBorderPainted(false);
-        updateBtn.setBackground(new Color(70, 130, 180));
-        updateBtn.setForeground(Color.WHITE);
-        updateBtn.setOpaque(true);
-        updateBtn.setBorderPainted(false);
-        confirmBtn.setBackground(new Color(100, 149, 237));
-        confirmBtn.setForeground(Color.WHITE);
-        confirmBtn.setOpaque(true);
-        confirmBtn.setBorderPainted(false);
-        cancelBtn.setBackground(new Color(220, 20, 60));
-        cancelBtn.setForeground(Color.WHITE);
-        cancelBtn.setOpaque(true);
-        cancelBtn.setBorderPainted(false);
+        JButton updateBtn =
+                ModernTheme.primaryButton("✎ Update");
+
+        JButton confirmBtn =
+                ModernTheme.primaryButton("✓ Confirm");
+
+        JButton cancelBtn =
+                ModernTheme.dangerButton("✕ Cancel");
+
+        JButton clearBtn =
+                ModernTheme.secondaryButton("Clear");
+
+
 
         addBtn.addActionListener(this::addBooking);
         updateBtn.addActionListener(this::updateBooking);
@@ -177,6 +181,9 @@ public class BookingManagementPanel extends JPanel {
 
         gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 4;
         formPanel.add(buttonPanel, gbc);
+        gbc.gridy = 5;
+        gbc.weighty = 1.0;
+        formPanel.add(Box.createVerticalGlue(), gbc);
 
         add(formPanel, BorderLayout.CENTER);
     }
